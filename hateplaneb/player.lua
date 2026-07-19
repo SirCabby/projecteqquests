@@ -35,3 +35,23 @@ function event_timer(e)
 		eq.stop_timer("s3");
 	end
 end
+
+-- Exit book at the zone-in (doorid 119, both versions; dbmate migration
+-- hateplaneb_exit_book) -> back to Oasis, 10 south of the entry book there.
+function event_click_door(e)
+	if (e.door:GetDoorID() == 119) then
+		-- (title, text, popup_id, negative_id, buttons=1 => Yes/No). Only
+		-- "Yes" fires event_popup_response; No / titlebar X / ESC decline.
+		e.self:Popup(
+			"Planar Attunement",
+			"This tome resonates with the sands of Oasis. Do you wish to leave the Plane of Hate?",
+			9023, 0, 1, 0
+		);
+	end
+end
+
+function event_popup_response(e)
+	if (e.popup_id == 9023) then
+		e.self:MovePC(37, -185, -226, -1, 0);
+	end
+end
