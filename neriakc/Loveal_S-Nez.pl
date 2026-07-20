@@ -74,8 +74,16 @@ sub EVENT_ITEM
 
 		elsif(plugin::check_handin(\%itemcount, 13390 => 1))#Thex Mallet
 			{
-			quest::say("Oh how grand it is!! Look at it!! I feel the power trembling within. Who would have thought such an item would be abandoned? You have performed supremely. Queen Cristanos shall reward me greatly and I shall reward you greatly. Here is my weapon from years past.. the Reaper of the Dead. I believe it has one soul still trapped within.");
-			quest::summonitem(5374);#Reaper of the Dead
+			if (quest::is_content_flag_enabled("Classic_OldWorldDrops"))
+				{
+				quest::say("Oh how grand it is!! Look at it!! I feel the power trembling within. Who would have thought such an item would be abandoned? You have performed supremely. Queen Cristanos shall reward me greatly. For your service, take this relic of the Dead from ages past.. the Ring of the Dead. Few remain worthy to wear it.");
+				quest::summonitem(13393);#Ring of the Dead (legacy toggle reward)
+				}
+			else
+				{
+				quest::say("Oh how grand it is!! Look at it!! I feel the power trembling within. Who would have thought such an item would be abandoned? You have performed supremely. Queen Cristanos shall reward me greatly and I shall reward you greatly. Here is my weapon from years past.. the Reaper of the Dead. I believe it has one soul still trapped within.");
+				quest::summonitem(5374);#Reaper of the Dead
+				}
 			quest::exp(33750);#1% level 16 exp
 			quest::ding();
 			#Faction verified per ZAM

@@ -29,6 +29,14 @@ function event_trade(e)
 		e.other:Faction(279,10,0); -- Faction: King Tearis Thex
 		e.other:AddEXP(2000);
 		eq.depop_with_timer();
+	elseif(eq.is_content_flag_enabled("Classic_OldWorldDrops") and item_lib.check_turn_in(e.trade, {item1 = 13112})) then
+		-- Thex Dagger path: return the prepared bracer, receive the Princess's amulet
+		e.self:Say("King Tearis Thex thanks you, my friend. Take this amulet -- the Princess's own -- and return it to her. She will know you for a true servant of the Silent Watch.");
+		e.other:SummonItem(13109); -- Item: Royal Amulet of Thex (Princess Lenya's Amulet)
+		e.other:Ding();
+		e.other:Faction(226,10,0); -- Clerics of Tunare
+		e.other:Faction(279,10,0); -- King Tearis Thex
+		e.other:AddEXP(2000);
 	end
 	item_lib.return_items(e.self, e.other, e.trade)
 end
