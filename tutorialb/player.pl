@@ -22,7 +22,9 @@ sub EVENT_ENTERZONE {
   if ($ulevel > 15 && $status < 80) {
     $client->Message(15, "You are too high in level to be in this zone.");
     quest::selfcast(2433);
-  }  
+  }
+
+  BackfillGloomingdeepKoboldArmor();
 }
 
 sub EVENT_POPUPRESPONSE {
@@ -172,7 +174,21 @@ sub EVENT_TASK_STAGE_COMPLETE {
   if (($task_id == 5092) && ($activity_id == 1)) {
     $client->Message(0, "Vahlara bows as you return. 'Just in time. Many are wounded and more arrive by the hour. If you can find any Gloomingdeep silk, bring it to me and I can reward you with more burlap clothing. It's not much, but it's nicer than the rags these kobolds left us with.'");
   }
-} 
+}
+
+# These three tasks pay out a piece of the Gloomingdeep Kobold armor set in the
+# player's armor type. The pieces are class-specific, so the tasks are flagged
+# reward_method = 2 (METHODQUEST) and the item is handed out from here instead of
+# by the task system. Basic Training's arm pieces are handled by Vahlara.pl.
+sub EVENT_TASK_COMPLETE {
+  my %armor_tasks = (5091 => "legs", 5092 => "chest", 5094 => "hands");
+
+  if (defined($armor_tasks{$task_id})) {
+    GrantGloomingdeepKoboldArmor($armor_tasks{$task_id});
+  }
+
+  return 0; # a non-zero return here suppresses the task's exp and cash rewards
+}
 
 sub EVENT_CLICKDOOR {
   my $d_id = ($doorid % 256);
@@ -238,6 +254,59 @@ sub EVENT_CLICKDOOR {
     }
     else {
       quest::movepc(202, -55, 44, -158.81); # Zone: poknowledge
+    }
+  }
+}
+
+# The Gloomingdeep Kobold armor set, by slot and then by the armor type's class
+# bitmask. The masks are lifted straight from the items' own `classes` column, so
+# this can never hand someone a piece their class cannot wear:
+#   151 = WAR CLR PAL SHD BRD (plate)     33544 = RNG ROG SHM BER (chain)
+#   16480 = DRU MNK BST (leather)         15360 = NEC WIZ MAG ENC (cloth)
+sub GloomingdeepKoboldArmorPiece {
+  my $slot = shift;
+  my %pieces = (
+    hands => {151 => 67101, 33544 => 67108, 16480 => 67115, 15360 => 67122},
+    legs  => {151 => 67105, 33544 => 67112, 16480 => 67119, 15360 => 67126},
+    chest => {151 => 67106, 33544 => 67113, 16480 => 67120, 15360 => 67127},
+  );
+
+  my $class_bit = 1 << ($client->GetClass() - 1);
+  foreach my $mask (keys %{$pieces{$slot}}) {
+    if ($class_bit & $mask) {
+      return $pieces{$slot}{$mask};
+    }
+  }
+
+  return 0;
+}
+
+# The qglobal marks the slot as paid so the backfill below can tell a character
+# who earned a piece under the old rewards from one who has already been given it.
+sub GrantGloomingdeepKoboldArmor {
+  my $slot = shift;
+  my $item_id = GloomingdeepKoboldArmorPiece($slot);
+
+  if ($item_id) {
+    quest::summonitem($item_id);
+    quest::setglobal("gdkobold_" . $slot, 1, 1, "F");
+  }
+}
+
+# Characters who finished these tasks before the kobold armor rewards were
+# restored got a burlap piece or coin instead and are still owed their armor.
+sub BackfillGloomingdeepKoboldArmor {
+  if ($ulevel > 15) {
+    return;
+  }
+
+  my %armor_tasks = (5091 => "legs", 5092 => "chest", 5094 => "hands");
+
+  foreach my $task (keys %armor_tasks) {
+    my $slot = $armor_tasks{$task};
+    if (quest::istaskcompleted($task) && !defined($qglobals{"gdkobold_" . $slot})) {
+      $client->Message(15, "A quartermaster of the revolt presses a piece of kobold armor into your hands -- payment you were owed for your work in the mines.");
+      GrantGloomingdeepKoboldArmor($slot);
     }
   }
 }
