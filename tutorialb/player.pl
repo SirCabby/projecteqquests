@@ -176,15 +176,29 @@ sub EVENT_TASK_STAGE_COMPLETE {
   }
 }
 
-# These three tasks pay out a piece of the Gloomingdeep Kobold armor set in the
-# player's armor type. The pieces are class-specific, so the tasks are flagged
-# reward_method = 2 (METHODQUEST) and the item is handed out from here instead of
-# by the task system. Basic Training's arm pieces are handled by Vahlara.pl.
-sub EVENT_TASK_COMPLETE {
-  my %armor_tasks = (5091 => "legs", 5092 => "chest", 5094 => "hands");
+# Which Gloomingdeep Kobold piece each task pays out. Every piece is specific to
+# the player's armor type, and tasks.reward_id_list only holds one item id, so the
+# grant happens here rather than in the task system. Tasks that keep a reward of
+# their own (5091/5092 do not, 1394/1395/1448/5102 do) are left on their original
+# reward_method so the task system still hands that out alongside this piece.
+# Basic Training's ARM pieces are Vahlara's, granted when she is hailed.
+sub GloomingdeepKoboldTasks {
+  return (
+    1448 => "weapon", # Basic Training              (also gives Kobold Skull Charm)
+    1394 => "head",   # Arachnophobia (Group)       (also gives 4x Distillate)
+    1395 => "wrist",  # Goblin Treachery            (also gives Potion of Invisibility)
+    5091 => "legs",   # Clearing the Vermin Nests
+    5092 => "chest",  # Spider Caves
+    5094 => "hands",  # Busted Locks                (also gives 3pp)
+    5102 => "feet",   # The Battle of Gloomingdeep  (also gives Gloomiron greaves)
+  );
+}
 
-  if (defined($armor_tasks{$task_id})) {
-    GrantGloomingdeepKoboldArmor($armor_tasks{$task_id});
+sub EVENT_TASK_COMPLETE {
+  my %kobold_tasks = GloomingdeepKoboldTasks();
+
+  if (defined($kobold_tasks{$task_id})) {
+    GrantGloomingdeepKoboldArmor($kobold_tasks{$task_id});
   }
 
   return 0; # a non-zero return here suppresses the task's exp and cash rewards
@@ -258,17 +272,27 @@ sub EVENT_CLICKDOOR {
   }
 }
 
-# The Gloomingdeep Kobold armor set, by slot and then by the armor type's class
-# bitmask. The masks are lifted straight from the items' own `classes` column, so
-# this can never hand someone a piece their class cannot wear:
+# The Gloomingdeep Kobold set, by slot and then by the class bitmask that gets it.
+# The armor masks are lifted straight from the items' own `classes` column, so this
+# can never hand someone a piece their class cannot wear:
 #   151 = WAR CLR PAL SHD BRD (plate)     33544 = RNG ROG SHM BER (chain)
 #   16480 = DRU MNK BST (leather)         15360 = NEC WIZ MAG ENC (cloth)
+# The five weapons overlap by class, so their masks are narrowed to the class that
+# fights with that weapon type -- each is a subset of the item's own `classes`, and
+# together they still cover all 16 classes:
+#   15906 = CLR DRU SHM NEC WIZ MAG ENC (club)   157 = WAR PAL RNG SHD BRD (shortsword)
+#   256 = ROG (dagger)   16448 = MNK BST (fists)   32768 = BER (greatsword)
 sub GloomingdeepKoboldArmorPiece {
   my $slot = shift;
   my %pieces = (
-    hands => {151 => 67101, 33544 => 67108, 16480 => 67115, 15360 => 67122},
-    legs  => {151 => 67105, 33544 => 67112, 16480 => 67119, 15360 => 67126},
-    chest => {151 => 67106, 33544 => 67113, 16480 => 67120, 15360 => 67127},
+    wrist  => {151 => 67100, 33544 => 67107, 16480 => 67114, 15360 => 67121},
+    hands  => {151 => 67101, 33544 => 67108, 16480 => 67115, 15360 => 67122},
+    feet   => {151 => 67102, 33544 => 67109, 16480 => 67116, 15360 => 67123},
+    head   => {151 => 67103, 33544 => 67110, 16480 => 67117, 15360 => 67124},
+    arms   => {151 => 67104, 33544 => 67111, 16480 => 67118, 15360 => 67125}, # Vahlara.pl
+    legs   => {151 => 67105, 33544 => 67112, 16480 => 67119, 15360 => 67126},
+    chest  => {151 => 67106, 33544 => 67113, 16480 => 67120, 15360 => 67127},
+    weapon => {15906 => 67128, 157 => 67129, 256 => 67130, 16448 => 67131, 32768 => 67132},
   );
 
   my $class_bit = 1 << ($client->GetClass() - 1);
@@ -293,21 +317,26 @@ sub GrantGloomingdeepKoboldArmor {
   }
 }
 
-# Characters who finished these tasks before the kobold armor rewards were
-# restored got a burlap piece or coin instead and are still owed their armor.
+# Characters who finished these tasks before the kobold rewards were restored got
+# a burlap piece, a potion or coin instead, and are still owed their kobold gear.
 sub BackfillGloomingdeepKoboldArmor {
   if ($ulevel > 15) {
     return;
   }
 
-  my %armor_tasks = (5091 => "legs", 5092 => "chest", 5094 => "hands");
+  my %kobold_tasks = GloomingdeepKoboldTasks();
+  my $owed = 0;
 
-  foreach my $task (keys %armor_tasks) {
-    my $slot = $armor_tasks{$task};
+  foreach my $task (keys %kobold_tasks) {
+    my $slot = $kobold_tasks{$task};
     if (quest::istaskcompleted($task) && !defined($qglobals{"gdkobold_" . $slot})) {
-      $client->Message(15, "A quartermaster of the revolt presses a piece of kobold armor into your hands -- payment you were owed for your work in the mines.");
       GrantGloomingdeepKoboldArmor($slot);
+      $owed++;
     }
+  }
+
+  if ($owed) {
+    $client->Message(15, "A quartermaster of the revolt catches up with you and hands over kobold gear you were owed for your work in the mines.");
   }
 }
 
