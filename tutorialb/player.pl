@@ -1,3 +1,14 @@
+# zone: tutorialb
+# The Gloomingdeep Kobold set is handed out from GloomingdeepKoboldArmorPiece()
+# below, which picks the id out of a table -- so the ids never appear in a literal
+# summonitem() call. These headers are the tree's convention for declaring them
+# and are what the item browsers index on:
+# items: 67100, 67101, 67102, 67103, 67104, 67105, 67106
+# items: 67107, 67108, 67109, 67110, 67111, 67112, 67113
+# items: 67114, 67115, 67116, 67117, 67118, 67119, 67120
+# items: 67121, 67122, 67123, 67124, 67125, 67126, 67127
+# items: 67128, 67129, 67130, 67131, 67132
+# items: 59943, 14206
 sub EVENT_ENTERZONE {
 
   quest::MovePCInstance(189, $instanceid, 2, -146, 19.6, 303.75); # Zone: tutorialb
@@ -194,8 +205,25 @@ sub GloomingdeepKoboldTasks {
   );
 }
 
+# Fixed rewards the task system used to hand out through tasks.reward_id_list.
+# They moved here when these tasks went reward_method = 2, which was needed so
+# reward_id_list could list every possible reward for the item browsers without
+# the task system handing all of them out at once. Not part of the backfill --
+# characters who completed the task earlier were paid these correctly at the time.
+sub GloomingdeepKoboldTaskExtras {
+  return (
+    1448 => 59943, # Kobold Skull Charm
+    1395 => 14206, # Potion of Invisibility
+  );
+}
+
 sub EVENT_TASK_COMPLETE {
   my %kobold_tasks = GloomingdeepKoboldTasks();
+  my %extras       = GloomingdeepKoboldTaskExtras();
+
+  if (defined($extras{$task_id})) {
+    quest::summonitem($extras{$task_id});
+  }
 
   if (defined($kobold_tasks{$task_id})) {
     GrantGloomingdeepKoboldArmor($kobold_tasks{$task_id});
