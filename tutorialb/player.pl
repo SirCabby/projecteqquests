@@ -9,6 +9,8 @@
 # items: 67121, 67122, 67123, 67124, 67125, 67126, 67127
 # items: 67128, 67129, 67130, 67131, 67132
 # items: 59943, 14206
+# The tasks whose rewards are paid out from here, likewise looked up from a table:
+# tasks: 1394, 1395, 1448, 5091, 5092, 5094, 5102
 sub EVENT_ENTERZONE {
 
   quest::MovePCInstance(189, $instanceid, 2, -146, 19.6, 303.75); # Zone: tutorialb
