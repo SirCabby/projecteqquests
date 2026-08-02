@@ -8,12 +8,28 @@ function event_click_door(e)
     -- migration oasis_plane_of_hate_book). The popup window caps at 2
     -- buttons, so this is a two-level button menu (no saylinks). Decline =
     -- titlebar X / ESC (client EQUI_LargeDialogWnd.xml) or the 30s expiry.
-    e.self:Popup(
-      "Planar Attunement",
-      "This tome resonates with every age of the Plane of Hate. Which do you seek? (Close or ignore this window to remain.)",
-      9018, 9019, 2, 30,
-      "Original Plane", "Revamped Eras..."
-    );
+    --
+    -- ERA GATE: hateplaneb (186) is a Legacy of Ykesha zone -- see migration
+    -- 20260802210238, which sets zone.expansion = 5 on the 182-189 LoY block.
+    -- The gate has to live here rather than on the door, because this one book
+    -- also serves the CLASSIC plane and so must keep spawning at every era.
+    -- MovePC bypasses the zoning expansion check entirely (ProcessMovePC has no
+    -- such check), so without this the popup would teleport straight past it.
+    if (eq.is_current_expansion_the_legacy_of_ykesha()) then
+      e.self:Popup(
+        "Planar Attunement",
+        "This tome resonates with every age of the Plane of Hate. Which do you seek? (Close or ignore this window to remain.)",
+        9018, 9019, 2, 30,
+        "Original Plane", "Revamped Eras..."
+      );
+    else
+      e.self:Popup(
+        "Planar Attunement",
+        "This tome resonates with the Plane of Hate. Only one age answers you. (Close or ignore this window to remain.)",
+        9018, 0, 1, 30,
+        "Original Plane"
+      );
+    end
   end
 end
 
@@ -22,6 +38,11 @@ function event_popup_response(e)
     -- Original Plane of Hate: hateplane 76 (classic geometry + population),
     -- landing at its zone-in safe point.
     e.self:MovePC(76, -353, -375, 4, 0);
+  elseif (e.popup_id == 9019 or e.popup_id == 9020 or e.popup_id == 9021) and
+         (not eq.is_current_expansion_the_legacy_of_ykesha()) then
+    -- Era gate, second line of defence: popup ids arrive from the client, so a
+    -- replayed or hand-sent response must not walk past the check above.
+    return;
   elseif (e.popup_id == 9019) then
     -- second menu level: the two hateplaneb eras
     e.self:Popup(
