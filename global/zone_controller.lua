@@ -72,8 +72,8 @@ local SCHEDULE = {
 
 local RESYNC_MS = 60 * 1000;
 
-local schedule     = nil;
-local bootstrapped = false;
+local schedule = nil;
+local resolved = false;
 
 -- Value of a condition at `now`: the argument of the latest transition at or before
 -- `now`. Before the first transition of the day the previous day's last one still
@@ -114,21 +114,29 @@ end
 -- PopulateZoneSpawnList while the zone is still loading, and the parser does not yet
 -- answer HasQuestSub for npc id 10 at that point, so the controller's own EVENT_SPAWN is
 -- never dispatched (verified on dev: the script loaded but never fired). Every NPC that
--- spawns in the zone dispatches EVENT_SPAWN_ZONE to the controller, so the first one
--- after boot is the entry point. Only the first is acted on -- the timer carries the
--- rest, which keeps this off the per-spawn hot path in every zone on the server.
+-- spawns in the zone dispatches EVENT_SPAWN_ZONE to the controller, so this is the entry
+-- point after a boot.
+--
+-- Sync and re-arm on EVERY event rather than only the first. `Zone::Repop` calls
+-- `quest_manager.ClearAllTimers()`, which destroys the timer below, and a #repop does
+-- NOT reload the Lua chunk -- so a one-shot guard here leaves the controller dead after
+-- any repop until the next quest reload or zone boot (observed on live: a GM #repop
+-- during the 03:00-04:01 window stranded Kithicor with both conditions off). Re-arming
+-- unconditionally is what makes this survive a repop. eq.set_timer is idempotent, so the
+-- timer simply restarts and ends up firing only during a lull in spawns -- which is
+-- exactly when it is needed.
 function event_spawn_zone(e)
-	if (bootstrapped) then
+	if (not resolved) then
+		resolved = true;
+		schedule = SCHEDULE[eq.get_zone_short_name()];
+	end
+
+	if (schedule == nil) then
 		return;
 	end
 
-	bootstrapped = true;
-	schedule     = SCHEDULE[eq.get_zone_short_name()];
-
-	if (schedule ~= nil) then
-		eq.set_timer("daynight", RESYNC_MS);
-		sync();
-	end
+	eq.set_timer("daynight", RESYNC_MS);
+	sync();
 end
 
 function event_timer(e)
