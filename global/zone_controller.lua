@@ -110,22 +110,27 @@ local function sync()
 	end
 end
 
--- EVENT_SPAWN_ZONE, not EVENT_SPAWN. NPC::SpawnZoneController() runs inside
--- PopulateZoneSpawnList while the zone is still loading, and the parser does not yet
--- answer HasQuestSub for npc id 10 at that point, so the controller's own EVENT_SPAWN is
--- never dispatched (verified on dev: the script loaded but never fired). Every NPC that
--- spawns in the zone dispatches EVENT_SPAWN_ZONE to the controller, so this is the entry
--- point after a boot.
+-- EVENT_SPAWN_ZONE / EVENT_DESPAWN_ZONE, not EVENT_SPAWN. NPC::SpawnZoneController()
+-- runs inside PopulateZoneSpawnList while the zone is still loading, and the parser does
+-- not yet answer HasQuestSub for npc id 10 at that point, so the controller's own
+-- EVENT_SPAWN is never dispatched (verified on dev: the script loaded but never fired).
+-- Every NPC that spawns dispatches EVENT_SPAWN_ZONE to the controller, and every NPC that
+-- depops dispatches EVENT_DESPAWN_ZONE (NPC::Depop), so between them any zone with
+-- players in it wakes this constantly.
 --
--- Sync and re-arm on EVERY event rather than only the first. `Zone::Repop` calls
--- `quest_manager.ClearAllTimers()`, which destroys the timer below, and a #repop does
--- NOT reload the Lua chunk -- so a one-shot guard here leaves the controller dead after
--- any repop until the next quest reload or zone boot (observed on live: a GM #repop
--- during the 03:00-04:01 window stranded Kithicor with both conditions off). Re-arming
--- unconditionally is what makes this survive a repop. eq.set_timer is idempotent, so the
--- timer simply restarts and ends up firing only during a lull in spawns -- which is
--- exactly when it is needed.
-function event_spawn_zone(e)
+-- Both hooks re-arm, and BOTH are needed. Anything that clears quest timers --
+-- `Zone::Repop` and `QuestParserCollection::ReloadQuests(reset_timers)` both call
+-- `quest_manager.ClearAllTimers()` -- destroys the timer below, and neither necessarily
+-- reloads the Lua chunk, so a one-shot bootstrap guard leaves the controller dead
+-- afterwards. Worse, keying the wake-up on spawns ALONE deadlocks: if a reload kills the
+-- timer while the night points are disabled, nothing spawns, so nothing re-arms the
+-- timer, so the conditions are never corrected and the night points stay disabled
+-- forever. That is exactly how Kithicor froze on live at the 08:14 values while the clock
+-- ran on to 01:07. Despawns break the cycle -- players killing anything re-arms it.
+--
+-- eq.set_timer is idempotent, so the timer just restarts and ends up firing only during a
+-- genuine lull, which is when it is actually needed.
+local function wake()
 	if (not resolved) then
 		resolved = true;
 		schedule = SCHEDULE[eq.get_zone_short_name()];
@@ -137,6 +142,14 @@ function event_spawn_zone(e)
 
 	eq.set_timer("daynight", RESYNC_MS);
 	sync();
+end
+
+function event_spawn_zone(e)
+	wake();
+end
+
+function event_despawn_zone(e)
+	wake();
 end
 
 function event_timer(e)
