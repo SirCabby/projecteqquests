@@ -70,8 +70,6 @@ local SCHEDULE = {
 	["thurgadinb"]    = { [1] = {{600,0},{1600,1}}, [2] = {{700,1},{1500,0}} },
 };
 
-local RESYNC_MS = 60 * 1000;
-
 local schedule = nil;
 local resolved = false;
 
@@ -110,50 +108,34 @@ local function sync()
 	end
 end
 
--- EVENT_SPAWN_ZONE / EVENT_DESPAWN_ZONE, not EVENT_SPAWN. NPC::SpawnZoneController()
--- runs inside PopulateZoneSpawnList while the zone is still loading, and the parser does
--- not yet answer HasQuestSub for npc id 10 at that point, so the controller's own
--- EVENT_SPAWN is never dispatched (verified on dev: the script loaded but never fired).
--- Every NPC that spawns dispatches EVENT_SPAWN_ZONE to the controller, and every NPC that
--- depops dispatches EVENT_DESPAWN_ZONE (NPC::Depop), so between them any zone with
--- players in it wakes this constantly.
+-- EVENT_TICK, deliberately. It is dispatched from `NPC::Process` off `Mob::tic_timer`
+-- (6000ms, `mob.cpp`) with no guard beyond `p_depop`, so the zone controller fires it
+-- every 6 seconds for as long as the zone is loaded. That makes it the only hook here
+-- that does not depend on something else happening:
 --
--- Both hooks re-arm, and BOTH are needed. Anything that clears quest timers --
--- `Zone::Repop` and `QuestParserCollection::ReloadQuests(reset_timers)` both call
--- `quest_manager.ClearAllTimers()` -- destroys the timer below, and neither necessarily
--- reloads the Lua chunk, so a one-shot bootstrap guard leaves the controller dead
--- afterwards. Worse, keying the wake-up on spawns ALONE deadlocks: if a reload kills the
--- timer while the night points are disabled, nothing spawns, so nothing re-arms the
--- timer, so the conditions are never corrected and the night points stay disabled
--- forever. That is exactly how Kithicor froze on live at the 08:14 values while the clock
--- ran on to 01:07. Despawns break the cycle -- players killing anything re-arms it.
+--   * EVENT_SPAWN never arrives at all -- NPC::SpawnZoneController() runs inside
+--     PopulateZoneSpawnList while the zone is still loading, before the parser answers
+--     HasQuestSub for npc id 10 (verified on dev: the script loaded but never fired).
+--   * EVENT_SPAWN_ZONE / EVENT_DESPAWN_ZONE need an NPC to spawn or die, which is not
+--     guaranteed -- a zone whose players are idle, or camping without killing, produces
+--     neither.
+--   * A quest timer is not safe either: `Zone::Repop` and
+--     `QuestParserCollection::ReloadQuests(reset_timers)` both call
+--     `quest_manager.ClearAllTimers()`, and neither necessarily reloads the Lua chunk.
 --
--- eq.set_timer is idempotent, so the timer just restarts and ends up firing only during a
--- genuine lull, which is when it is actually needed.
-local function wake()
+-- Keying the wake-up on spawns alone deadlocked Kithicor on live: a quest reload killed
+-- the resync timer while the night points were disabled, so nothing spawned, so nothing
+-- re-armed the timer, so the conditions were never corrected -- the zone sat on the
+-- values computed at zone_time 0814 while the clock ran on past midnight and the undead
+-- never came up. A tick cannot be starved that way and cannot be cleared.
+--
+-- Syncing every 6s is cheap: SetCondition early-returns when the value is unchanged, so
+-- between transitions this is two map lookups and an int compare.
+function event_tick(e)
 	if (not resolved) then
 		resolved = true;
 		schedule = SCHEDULE[eq.get_zone_short_name()];
 	end
 
-	if (schedule == nil) then
-		return;
-	end
-
-	eq.set_timer("daynight", RESYNC_MS);
 	sync();
-end
-
-function event_spawn_zone(e)
-	wake();
-end
-
-function event_despawn_zone(e)
-	wake();
-end
-
-function event_timer(e)
-	if (e.timer == "daynight") then
-		sync();
-	end
 end
