@@ -15,7 +15,15 @@ function event_click_door(e)
     -- also serves the CLASSIC plane and so must keep spawning at every era.
     -- MovePC bypasses the zoning expansion check entirely (ProcessMovePC has no
     -- such check), so without this the popup would teleport straight past it.
-    if (eq.is_current_expansion_the_legacy_of_ykesha()) then
+    --
+    -- Must be *_enabled() (>=), NOT is_current_expansion_*() (==). The two read
+    -- alike and mean opposite things here: world_content_service.h defines
+    -- IsTheLegacyOfYkeshaEnabled as `GetCurrentExpansion() >= TheLegacyOfYkesha
+    -- || == EXPANSION_ALL`, while IsCurrentExpansionTheLegacyOfYkesha is a bare
+    -- equality. With the equality the later ages were reachable only while the
+    -- server sat exactly on LoY -- they vanished again at LDoN and beyond, and
+    -- were never offered in all-eras mode.
+    if (eq.is_the_legacy_of_ykesha_enabled()) then
       e.self:Popup(
         "Planar Attunement",
         "This tome resonates with every age of the Plane of Hate. Which do you seek? (Close or ignore this window to remain.)",
@@ -39,7 +47,7 @@ function event_popup_response(e)
     -- landing at its zone-in safe point.
     e.self:MovePC(76, -353, -375, 4, 0);
   elseif (e.popup_id == 9019 or e.popup_id == 9020 or e.popup_id == 9021) and
-         (not eq.is_current_expansion_the_legacy_of_ykesha()) then
+         (not eq.is_the_legacy_of_ykesha_enabled()) then
     -- Era gate, second line of defence: popup ids arrive from the client, so a
     -- replayed or hand-sent response must not walk past the check above.
     return;
