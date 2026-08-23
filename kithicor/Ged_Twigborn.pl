@@ -21,16 +21,16 @@ sub EVENT_SAY {
 }
 
 sub EVENT_ITEM {
-  if (plugin::check_handin(\%itemcount, 13766 => 1, $gold >= 96)) {
+  if (plugin::check_handin(\%itemcount, 13766 => 1, "gold" => 96)) {
     quest::summonitem(2315); # Item: Lionskin Gloves
   }
-  if (plugin::check_handin(\%itemcount, 13752 => 1, $gold >= 25)) {
+  if (plugin::check_handin(\%itemcount, 13752 => 1, "gold" => 25)) {
     quest::summonitem(2314); # Item: Bearskin Gloves
   }
-  if (plugin::check_handin(\%itemcount, 13054 => 1, $gold >=6)) {
-    quest::say("2312");
+  if (plugin::check_handin(\%itemcount, 13054 => 1, "gold" => 6)) {
+    quest::summonitem(2312); # Item: Ratskin Gloves
   }
-  if (plugin::check_handin(\%itemcount, 13755 => 1, $gold >=13)) {
+  if (plugin::check_handin(\%itemcount, 13755 => 1, "gold" => 13)) {
     quest::summonitem(2313); # Item: Wolfskin Gloves
   }
 }

@@ -34,7 +34,7 @@ sub EVENT_SAY {
 }
 
 sub EVENT_ITEM {
-  if (($platinum >= 900) && plugin::check_handin(\%itemcount, 3141 => 1, 3145 => 1, 3140 => 1)) { #Platinum x 900, Darkforge Breastplate, Darkforge Greaves, Darkforge Helm
+  if (plugin::check_handin(\%itemcount, 3141 => 1, 3145 => 1, 3140 => 1, "platinum" => 900)) { #Platinum x 900, Darkforge Breastplate, Darkforge Greaves, Darkforge Helm
     quest::say("Well done, $name, I honestly didn't expect to see you again. Yes, yes, this is perfect! My mission is nearly complete!");
     quest::faction(404,7); # Faction: Truespirit
     if ($letter == 0) {

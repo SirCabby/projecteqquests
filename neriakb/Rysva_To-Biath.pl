@@ -25,7 +25,7 @@ sub EVENT_ITEM {
 		#The mob you kill for this quest is trivial at even level 10, or should be.  Giving a percentage of level 40
 		#xp seems too much.
 	}
-    elsif(plugin::check_handin(\%itemcount, 19071 => 1, 19070 => 1) && $platinum >= 1000) {
+    elsif(plugin::check_handin(\%itemcount, 19071 => 1, 19070 => 1, "platinum" => 1000)) {
         quest::summonitem(18302); # Item: Book of Scale
     }
   	plugin::return_items(\%itemcount);

@@ -70,7 +70,7 @@ sub EVENT_ITEM {
       quest::summonitem(54022); # Item: Scout's Mask
       quest::exp(100); 
    }
-   elsif (($gold >= 2) && (plugin::check_handin(\%itemcount, 7007 => 1))) {
+   elsif (plugin::check_handin(\%itemcount, 7007 => 1, "gold" => 2)) {
       quest::say("Well, well. I didn't think you could do it. Here's your cut and don't be surprised that it's not much because it's your first lesson. Remember. the smaller the operation. the bigger the share, and the richest rogues have the tightest lips.");
       quest::summonitem("7021");
       quest::givecash("0","5","0","0");

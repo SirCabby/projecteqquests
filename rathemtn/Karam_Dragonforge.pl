@@ -37,7 +37,7 @@ sub EVENT_ITEM {
    quest::summonitem(11603); # Item: White Dragonscale Cloak
   }
   #Handin:
-  if (plugin::check_handin(\%itemcount, 11622 => 1, 14402 => 1) && ($platinum >= 1000)) {
+  if (plugin::check_handin(\%itemcount, 11622 => 1, 14402 => 1, "platinum" => 1000)) {
    #Red Dragonscale Armor (END) 
    quest::say("Wonderful! Now I can get back to my fiance instantly! Isn't Love grand? As for your Red Dragonscale Armor, it is all done. Farewell!");
    #Summon: Red Dragonscale Armor 
