@@ -1,4 +1,4 @@
--- items: 69968, 51121, 51122, 18711, 13506, 13324, 13325, 12238
+-- items: 69968, 51121, 51122, 18711, 13506, 12237, 13324, 13325, 12238
 function event_spawn(e)
 	local xloc = e.self:GetX();
 	local yloc = e.self:GetY();
@@ -59,7 +59,11 @@ function event_trade(e)
 		e.other:Faction(219,15,0); -- Antonius Bayle
 		e.other:AddEXP(100);
 	elseif(fac <= 3) then -- Require kindly or greater faction 
-		if(item_lib.check_turn_in(e.trade, {item1 = 13324,item2 = 13325})) then -- Pestilence Scythe ID: 13324 # Decaying Heart ID: 13325
+		-- Two Lord Grimrots share spawngroup 10222499 in southkarana and drop different
+		-- Pestilence Scythes: PEQ npc 14143 drops 13324, TAKP-import npc 10014134 drops
+		-- 12237. Accept either so the turn-in works whichever one the player killed.
+		if(item_lib.check_turn_in(e.trade, {item1 = 13324,item2 = 13325})
+		   or item_lib.check_turn_in(e.trade, {item1 = 12237,item2 = 13325})) then -- Pestilence Scythe ID: 13324 or 12237 # Decaying Heart ID: 13325
 			e.self:Say("We thank you for your service. With Lord Grimrot's evil soul trapped in this scythe, all but the truly evil shadowknights would be able to wield it. I would like to present you with this as a token of our appreciation. Your devotion to life is supreme. Go now, and serve life.");
 			e.other:SummonItem(12238); -- Aegis of Life ID: 12238
 			e.other:Ding();
