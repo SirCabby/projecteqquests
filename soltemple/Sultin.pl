@@ -33,7 +33,7 @@ sub EVENT_ITEM {
     quest::faction(416,-1); # Faction: Shadowed Men
     quest::exp(1000);
   }
-  elsif (quest::handin({10087 => 1, 6340 => 1})) { # Items: Glowing Glamour Stone, Glowing Silver Wand
+  elsif (quest::handin({12240 => 1, 6340 => 1})) { # Items: Pouch of Silver Dust, Glowing Silver Wand
     quest::say("I see that you are resourceful... you have earned your incandescent wand.");
     quest::summonitem(6334); # Item: Incandescent Wand
     quest::faction(415,5); # Faction: Temple of Solusek Ro
