@@ -1,0 +1,1 @@
+../nektulos/Slarin_K-Vekn.pl

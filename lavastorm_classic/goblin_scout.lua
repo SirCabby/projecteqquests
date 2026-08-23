@@ -1,0 +1,1 @@
+../lavastorm/v0/goblin_scout.lua

@@ -1,0 +1,1 @@
+../bazaar/Sateal_Deirosap.lua
