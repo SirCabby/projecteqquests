@@ -1,4 +1,4 @@
--- items: 17941, 18804, 13882, 13006, 18805, 6537, 13396, 2112, 2106, 2111, 2104, 2108
+-- items: 17941, 18804, 13882, 13006, 18805, 13288, 6357, 13396, 2112, 2106, 2111, 2104, 2108
 function event_say(e)
 	if(e.message:findi("hail")) then
 		e.self:Say("Hail, noble " .. e.other:GetName() .. ". Remember to spread the words of Karana throughout the faraway lands on which you shall tread. We of the Temple of Thunder are looking for new members - good people who [wish to join our cause]. Let the call go out!");
@@ -37,13 +37,23 @@ function event_trade(e)
 		e.other:GiveCash(5,2,0,0);
 	elseif(item_lib.check_turn_in(e.trade, {item1 = 18805})) then
 		e.self:Say("This is terrible news. It is good you did not find your grave in the catacombs. You completed your mission regardless of the odds of survival. The temple thanks you. We shall still require your service, Knight of Thunder. Events have transpired which put all agents of righteousness in danger. We cannot explain all as yet. Take this note to Freeport. You will give it to Eestyana Naestra at the Hall of Truth. Beware, now. The Shrine of Bertoxxulous now knows of your allegiance. Give me any other item.");
-		e.other:SummonItem(6537);
+		e.other:SummonItem(18804); -- Item: Tattered Note (the note for Eestyana Naestra, Hall of Truth)
 		e.other:Ding();
 		e.other:Faction(280,1,0); -- Knights of Thunder
 		e.other:Faction(341,1,0); -- Preists of Life
 		e.other:Faction(262,1,0); -- Guards of Qeynos
 		e.other:Faction(221,-1,0); -- Bloodsabers
 		e.other:AddEXP(500);
+		e.other:GiveCash(0,0,8,0);
+	elseif(item_lib.check_turn_in(e.trade, {item1 = 13288})) then -- Order of Thunder (Drosco's Medal)
+		e.self:Say("Drosco's Order of Thunder... then he is truly lost to us. You have released a Knight of Thunder from the grip of Bertoxxulous and returned his medal to the temple. Take this Thunder Staff. It is meant for the young clerics and paladins of this temple, and you have more than earned it. Go forth and spread the words of the Rainkeeper.");
+		e.other:SummonItem(6357); -- Item: Thunder Staff
+		e.other:Ding();
+		e.other:Faction(280,50,0); -- Knights of Thunder
+		e.other:Faction(341,37,0); -- Priests of Life
+		e.other:Faction(262,37,0); -- Guards of Qeynos
+		e.other:Faction(221,-50,0); -- Bloodsabers
+		e.other:AddEXP(1000);
 		e.other:GiveCash(0,0,8,0);
 	elseif(item_lib.check_turn_in(e.trade, {item1 = 13396})) then -- Rat Kings Head
 		e.self:Say("So it is true, he does... or did, exist.  Well done "..e.other:GetName()..", take this for your trouble.");
