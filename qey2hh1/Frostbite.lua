@@ -25,8 +25,10 @@ function event_timer(e)
 		eq.unique_spawn(bad_thief,188,0,random_x,random_y,10,0);
 		e.self:SetRunning(true);
 		local mobtypeID =  entity_list:GetMobByNpcTypeID(bad_thief);
-		local follow_mob = mobtypeID:GetID();
-		eq.follow(follow_mob);
+		if(mobtypeID) then
+			local follow_mob = mobtypeID:GetID();
+			eq.follow(follow_mob);
+		end
 	elseif(e.timer == "depop") then
 		eq.depop_with_timer();
 	end
