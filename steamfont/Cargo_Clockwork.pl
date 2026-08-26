@@ -1,3 +1,23 @@
+# Steamfont delivery run: the cargo clockwork walks grid 177 to the windmills at 8am
+# game time and is ambushed at waypoint 10 by Hector/Renaldo/Jerald, whose severed
+# heads (85055-85057) are Jarah Reskan's turn-in in Ak'Anon for the Highway
+# Protectors Mask. The bandits have NO spawnentry row -- this script is the only
+# thing that puts them in the world, so if it does not run they are unobtainable.
+#
+# ATTACHED TO TWO NPCs. The TAKP spawn import (20260720000001/4) turned the clockwork
+# into an era-split PAIR sharing spawngroup 10056105 -- one point, 100 weight each:
+#
+#   #Cargo_Clockwork 10056009   spawnentry min/max_expansion 0/3     800hp  AC 108
+#    Cargo_Clockwork    56105   spawnentry min/max_expansion 4/99   1200hp  AC 127
+#
+# EQEmu builds a quest filename from npc_types.name verbatim -- the '#' is NOT
+# stripped (quest_parser_collection.cpp GetQIByNPCQuest) -- so this file only ever
+# reached 56105 and the whole event was dead below Planes of Power. The sibling
+# '#Cargo_Clockwork.pl' is a relative symlink to this file; that is what makes the
+# run work at Classic. Keep both rows: retiring either would drag the other era's
+# stats and loottable (sprockets/scrap vs gizmos/Clockwork Oil Extract) across the
+# era line.
+
   my $delivery = 0;
   my $bandit1id = 56178;
   my $bandit2id = 56179;
