@@ -1,3 +1,13 @@
+-- ATTACHED TO TWO NPCs. Ak'Anon has five scrubbers on four points: clockwork_scrubber
+-- 10055035 / 10055349 (spawngroup 10055035) and a fifth, #clockwork_scrubber 10055010,
+-- alone on spawngroup 10224174 at (-397, 776, -26). All five are the same creature --
+-- level 4, race 36, 80hp, loottable 10005192 -- but EQEmu builds a quest filename from
+-- npc_types.name verbatim and does NOT strip the '#' (quest_parser_collection.cpp
+-- GetQIByNPCQuest), so the fifth had no handler and could never roll miner628 or take
+-- the Scrubber Key. '#clockwork_scrubber.lua' beside it is a relative symlink to this
+-- file. Each scrubber rolls its own 5% miner628 chance in event_spawn, so this adds one
+-- more candidate rather than changing anyone's odds.
+
 -- Converted to .lua by Speedz
 -- items: 12164, 12162, 12167
 

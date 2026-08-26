@@ -1,3 +1,15 @@
+# ATTACHED TO TWO NPCs. The TAKP spawn import made Eldreth an era-split PAIR sharing
+# spawngroup 10051025 -- one point in the tower, 100 weight each:
+#
+#   #Eldreth 10051003   spawnentry min/max_expansion 0/0    lvl 20   333hp
+#    Eldreth    51025   spawnentry min/max_expansion 1/99   lvl 49  7500hp
+#
+# EQEmu builds a quest filename from npc_types.name verbatim and does NOT strip the
+# '#' (quest_parser_collection.cpp GetQIByNPCQuest), so this file only ever reached
+# 51025 and Eldreth was mute at Classic -- Stanos Herkanor sends you to him for the
+# rogue epic parchment and nobody answered. '#Eldreth.pl' beside it is a relative
+# symlink to this file. Same repair as steamfont/Cargo_Clockwork.pl.
+
 # Rogue Epic NPC -- Eldreth
 # items: 13087, 28012, 28053
 
